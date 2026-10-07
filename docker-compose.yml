@@ -1,0 +1,38 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: massmarket-db
+    environment:
+      POSTGRES_DB: massmarket
+      POSTGRES_USER: massmarket
+      POSTGRES_PASSWORD: massmarket
+    ports:
+      - "5432:5432"
+    volumes:
+      - massmarket_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U massmarket -d massmarket"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: massmarket-server
+    environment:
+      JDBC_URL: jdbc:postgresql://database:5432/massmarket
+      DB_USER: massmarket
+      DB_PASSWORD: massmarket
+      JWT_SECRET: change-this-secret-in-production
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  massmarket_pgdata:
+
